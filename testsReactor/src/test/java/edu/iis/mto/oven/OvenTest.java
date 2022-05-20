@@ -3,6 +3,7 @@ package edu.iis.mto.oven;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,8 @@ import java.util.List;
 @ExtendWith(MockitoExtension.class)
 class OvenTest {
 
+    List<ProgramStage> stages;
+
     Oven oven;
 
     @Mock
@@ -28,7 +31,26 @@ class OvenTest {
     @BeforeEach
     void setUp(){
         oven = new Oven(module, fan);
+        stages = new ArrayList<>();
     }
+
+    ProgramStage heater_stage = ProgramStage.builder()
+            .withStageTime(100)
+            .withHeat(HeatType.HEATER)
+            .withTargetTemp(300)
+            .build();
+
+    ProgramStage grill_stage = ProgramStage.builder()
+            .withStageTime(100)
+            .withHeat(HeatType.GRILL)
+            .withTargetTemp(300)
+            .build();
+
+    ProgramStage thermo_stage = ProgramStage.builder()
+            .withStageTime(100)
+            .withHeat(HeatType.THERMO_CIRCULATION)
+            .withTargetTemp(300)
+            .build();
 
     @Test
     void itCompiles() {
@@ -37,13 +59,7 @@ class OvenTest {
 
     @Test
     void normalRunHeaterTest(){
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                        .withStageTime(100)
-                        .withHeat(HeatType.HEATER)
-                        .withTargetTemp(300)
-                        .build();
-        stages.add(stage1);
+        stages.add(heater_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -54,13 +70,7 @@ class OvenTest {
 
     @Test
     void normalRunGrillTest(){
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.GRILL)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(grill_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -71,13 +81,7 @@ class OvenTest {
 
     @Test
     void normalRunThermoTest(){
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -88,11 +92,32 @@ class OvenTest {
 
     @Test
     void normalRunWithTwoStagesTest(){
-        List<ProgramStage> stages = new ArrayList<>();
         ProgramStage stage1 = ProgramStage.builder()
                 .withStageTime(100)
                 .withHeat(HeatType.HEATER)
                 .withTargetTemp(300)
+                .build();
+        ProgramStage stage2 = ProgramStage.builder()
+                .withStageTime(250)
+                .withHeat(HeatType.GRILL)
+                .withTargetTemp(200)
+                .build();
+        stages.add(heater_stage);
+        stages.add(thermo_stage);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(0)
+                .withStages(stages)
+                .withCoolAtFinish(true)
+                .build();
+        oven.runProgram(bakingProgram);
+    }
+
+    @Test
+    void normalRunWithTwoStagesDifferentTempTest(){
+        ProgramStage stage1 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.HEATER)
+                .withTargetTemp(100)
                 .build();
         ProgramStage stage2 = ProgramStage.builder()
                 .withStageTime(250)
@@ -111,13 +136,7 @@ class OvenTest {
 
     @Test
     void normalRunThermoNotCoolTest(){
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -128,13 +147,7 @@ class OvenTest {
 
     @Test
     void verifySimpleRunHeaterTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100) //with 0 test also
                 .withStages(stages)
@@ -146,15 +159,9 @@ class OvenTest {
 
     @Test
     void verifySimpleRunNoHeaterTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
-                .withInitialTemp(0) //with 0 test also
+                .withInitialTemp(0)
                 .withStages(stages)
                 .withCoolAtFinish(false)
                 .build();
@@ -164,13 +171,7 @@ class OvenTest {
 
     @Test
     void verifySimpleRunHeaterSettingsTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100) //with 0 test also
                 .withStages(stages)
@@ -186,15 +187,9 @@ class OvenTest {
 
     @Test
     void verifySimpleRunHeaterSettingsFanOnTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
-                .withInitialTemp(100) //with 0 test also
+                .withInitialTemp(100)
                 .withStages(stages)
                 .withCoolAtFinish(false)
                 .build();
@@ -210,13 +205,7 @@ class OvenTest {
 
     @Test
     void verifySimpleRunHeaterSettingsFanOffTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100) //with 0 test also
                 .withStages(stages)
@@ -233,13 +222,7 @@ class OvenTest {
 
     @Test
     void verifySimpleRunHeaterSettingsFanOnHeatingModuleTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -262,13 +245,7 @@ class OvenTest {
 
     @Test
     void inOrderVerifySimpleRunThermoSettingsFanOnHeatingModuleTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.THERMO_CIRCULATION)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(thermo_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -292,13 +269,7 @@ class OvenTest {
 
     @Test
     void verifySimpleRunGrillSettingsFanOnHeatingModuleTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.GRILL)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(grill_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -322,13 +293,7 @@ class OvenTest {
 
     @Test
     void inOrderVerifySimpleRunHeaterSettingsFanOnHeatingModuleTest() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.HEATER)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(heater_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -352,13 +317,7 @@ class OvenTest {
 
     @Test
     void fullInOrderTestWithCoolAtTheEnd() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.HEATER)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(heater_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -382,19 +341,8 @@ class OvenTest {
 
     @Test
     void fullInOrderTestWithCoolAtTheEndTwoStages() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.HEATER)
-                .withTargetTemp(300)
-                .build();
-        ProgramStage stage2 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.GRILL)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
-        stages.add(stage2);
+        stages.add(heater_stage);
+        stages.add(grill_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -424,13 +372,7 @@ class OvenTest {
 
     @Test
     void fullInOrderTestWithoutCoolAtTheEnd() throws HeatingException {
-        List<ProgramStage> stages = new ArrayList<>();
-        ProgramStage stage1 = ProgramStage.builder()
-                .withStageTime(100)
-                .withHeat(HeatType.HEATER)
-                .withTargetTemp(300)
-                .build();
-        stages.add(stage1);
+        stages.add(heater_stage);
         BakingProgram bakingProgram = BakingProgram.builder()
                 .withInitialTemp(100)
                 .withStages(stages)
@@ -450,6 +392,55 @@ class OvenTest {
         inOrder.verify(fan).isOn();
         inOrder.verify(module).heater(settings_heater);
         Mockito.verify(fan, Mockito.times(0)).on();
+    }
+
+    @Test
+    void heatingExceptionInitTest() throws HeatingException {
+        stages.add(heater_stage);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(false)
+                .build();
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(100)
+                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .build();
+        Mockito.doThrow(HeatingException.class).when(module).heater(settings);
+        Assertions.assertThrows(OvenException.class, () -> oven.runProgram(bakingProgram));
+
+    }
+
+    @Test
+    void heatingExceptionHeaterTest() throws HeatingException {
+        stages.add(heater_stage);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(false)
+                .build();
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        Mockito.doThrow(HeatingException.class).when(module).heater(settings);
+        Assertions.assertThrows(Exception.class, () -> oven.runProgram(bakingProgram));
+    }
+
+    @Test
+    void heatingExceptionThermoTest() throws HeatingException {
+        stages.add(thermo_stage);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(false)
+                .build();
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        Mockito.doThrow(HeatingException.class).when(module).termalCircuit(settings);
+        Assertions.assertThrows(OvenException.class, () -> oven.runProgram(bakingProgram));
     }
 
 }
