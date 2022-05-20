@@ -15,4 +15,9 @@ class OvenTest {
         assertThat(true, equalTo(true));
     }
 
+    @Test
+    void itWorks(){
+
+    }
+
 }
