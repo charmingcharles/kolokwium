@@ -261,7 +261,7 @@ class OvenTest {
     }
 
     @Test
-    void inOrderVerifySimpleRunHeaterSettingsFanOnHeatingModuleTest() throws HeatingException {
+    void inOrderVerifySimpleRunThermoSettingsFanOnHeatingModuleTest() throws HeatingException {
         List<ProgramStage> stages = new ArrayList<>();
         ProgramStage stage1 = ProgramStage.builder()
                 .withStageTime(100)
@@ -310,14 +310,146 @@ class OvenTest {
                 .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
                 .build();
         HeatingSettings settings_grill = HeatingSettings.builder()
-                .withTargetTemp(100)
-                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
                 .build();
         InOrder inOrder = Mockito.inOrder(module, fan);
         inOrder.verify(module, Mockito.times(1)).heater(settings);
         inOrder.verify(fan).isOn();
         inOrder.verify(module).grill(settings_grill);
-        inOrder.verify(fan).off();
+        Mockito.verify(fan, Mockito.times(0)).off();
+    }
+
+    @Test
+    void inOrderVerifySimpleRunHeaterSettingsFanOnHeatingModuleTest() throws HeatingException {
+        List<ProgramStage> stages = new ArrayList<>();
+        ProgramStage stage1 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.HEATER)
+                .withTargetTemp(300)
+                .build();
+        stages.add(stage1);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(false)
+                .build();
+        oven.runProgram(bakingProgram);
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(100)
+                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .build();
+        HeatingSettings settings_heater = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        InOrder inOrder = Mockito.inOrder(module, fan);
+        inOrder.verify(module, Mockito.times(1)).heater(settings);
+        inOrder.verify(fan).isOn();
+        inOrder.verify(module).heater(settings_heater);
+        Mockito.verify(fan, Mockito.times(0)).off();
+    }
+
+    @Test
+    void fullInOrderTestWithCoolAtTheEnd() throws HeatingException {
+        List<ProgramStage> stages = new ArrayList<>();
+        ProgramStage stage1 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.HEATER)
+                .withTargetTemp(300)
+                .build();
+        stages.add(stage1);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(true)
+                .build();
+        oven.runProgram(bakingProgram);
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(100)
+                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .build();
+        HeatingSettings settings_heater = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        InOrder inOrder = Mockito.inOrder(module, fan);
+        inOrder.verify(module, Mockito.times(1)).heater(settings);
+        inOrder.verify(fan).isOn();
+        inOrder.verify(module).heater(settings_heater);
+        inOrder.verify(fan).on();
+    }
+
+    @Test
+    void fullInOrderTestWithCoolAtTheEndTwoStages() throws HeatingException {
+        List<ProgramStage> stages = new ArrayList<>();
+        ProgramStage stage1 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.HEATER)
+                .withTargetTemp(300)
+                .build();
+        ProgramStage stage2 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.GRILL)
+                .withTargetTemp(300)
+                .build();
+        stages.add(stage1);
+        stages.add(stage2);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(true)
+                .build();
+        oven.runProgram(bakingProgram);
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(100)
+                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .build();
+        HeatingSettings settings_heater = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        HeatingSettings settings_grill = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        InOrder inOrder = Mockito.inOrder(module, fan);
+        inOrder.verify(module, Mockito.times(1)).heater(settings);
+        inOrder.verify(fan).isOn();
+        inOrder.verify(module).heater(settings_heater);
+        inOrder.verify(fan).isOn();
+        inOrder.verify(module).grill(settings_grill);
+        inOrder.verify(fan).on();
+    }
+
+    @Test
+    void fullInOrderTestWithoutCoolAtTheEnd() throws HeatingException {
+        List<ProgramStage> stages = new ArrayList<>();
+        ProgramStage stage1 = ProgramStage.builder()
+                .withStageTime(100)
+                .withHeat(HeatType.HEATER)
+                .withTargetTemp(300)
+                .build();
+        stages.add(stage1);
+        BakingProgram bakingProgram = BakingProgram.builder()
+                .withInitialTemp(100)
+                .withStages(stages)
+                .withCoolAtFinish(false)
+                .build();
+        oven.runProgram(bakingProgram);
+        HeatingSettings settings = HeatingSettings.builder()
+                .withTargetTemp(100)
+                .withTimeInMinutes(Oven.HEAT_UP_AND_FINISH_SETTING_TIME)
+                .build();
+        HeatingSettings settings_heater = HeatingSettings.builder()
+                .withTargetTemp(300)
+                .withTimeInMinutes(100)
+                .build();
+        InOrder inOrder = Mockito.inOrder(module, fan);
+        inOrder.verify(module, Mockito.times(1)).heater(settings);
+        inOrder.verify(fan).isOn();
+        inOrder.verify(module).heater(settings_heater);
+        Mockito.verify(fan, Mockito.times(0)).on();
     }
 
 }
